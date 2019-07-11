@@ -1,29 +1,27 @@
 const { ApolloServer, gql } = require("apollo-server-express");
-// const { typeDefs, resolvers } = require("./schema");
+const { typeDefs } = require("./typeDefs");
+const { resolvers } = require("./resolvers");
 const express = require("express");
+const mongoose = require("mongoose");
 
-const app = express();
+const startServer = async () => {
+  const app = express();
 
-const typeDefs = gql`
-  type Query {
-    hello: String
-  }
-`;
+  const server = new ApolloServer({
+    // These will be defined for both new or existing servers
+    typeDefs,
+    resolvers
+  });
 
-const resolvers = {
-  Query: {
-    hello: () => "hello"
-  }
+  await mongoose.connect("mongodb://localhost:27017/graphql-mongodb-node", {
+    useNewUrlParser: true
+  });
+
+  server.applyMiddleware({ app }); // app is from an existing express app
+
+  app.listen({ port: 4000 }, () =>
+    console.log(`🚀 Server ready at http://localhost:4000${server.graphqlPath}`)
+  );
 };
 
-const server = new ApolloServer({
-  // These will be defined for both new or existing servers
-  typeDefs,
-  resolvers
-});
-
-server.applyMiddleware({ app }); // app is from an existing express app
-
-app.listen({ port: 4000 }, () =>
-  console.log(`🚀 Server ready at http://localhost:4000${server.graphqlPath}`)
-);
+startServer();
